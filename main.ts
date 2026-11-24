@@ -3,7 +3,7 @@
 // Writes one apology line (1-200 chars, single line, no trailing newline)
 // to $MAKEFUN_OUTPUT_DIR/entry.txt (default: ./output).
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ENTRY =
@@ -19,4 +19,15 @@ if (ENTRY.includes("\n") || ENTRY.trim() !== ENTRY) {
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "./output";
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), ENTRY, "utf8");
+const outPath = join(outDir, "entry.txt");
+writeFileSync(outPath, ENTRY, "utf8");
+
+// Read back and verify what was actually written: byte-identical to ENTRY,
+// still one line, still no trailing newline.
+const written = readFileSync(outPath, "utf8");
+if (written !== ENTRY) {
+  throw new Error("verification failed: written entry.txt differs from ENTRY");
+}
+if (written.endsWith("\n") || written.includes("\n")) {
+  throw new Error("verification failed: entry.txt must be one line with no trailing newline");
+}
